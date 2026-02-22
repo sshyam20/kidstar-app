@@ -1,0 +1,144 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── helpers ──────────────────────────────────────────────────────────────
+
+    function isAuthed() {
+      return request.auth != null;
+    }
+
+    function uid() {
+      return request.auth.uid;
+    }
+
+    // Read the requesting user's Firestore profile (cached per evaluation)
+    function myData() {
+      return get(/databases/$(database)/documents/users/$(uid())).data;
+    }
+
+    function isMemberOf(familyId) {
+      let d = myData();
+      return d != null && d.get("familyId", null) == familyId;
+    }
+
+    function isParentOf(familyId) {
+      let d = myData();
+      return d != null
+        && d.get("familyId", null) == familyId
+        && d.get("role", null) == "parent";
+    }
+
+    // ── users/{uid} ───────────────────────────────────────────────────────────
+    // Each user manages their own profile doc (familyId, role, kidId).
+    // Parents may also write another user's doc when removing them from the
+    // family (sets familyId: null) — limited to those three fields only.
+
+    match /users/{userId} {
+      allow read: if isAuthed() && uid() == userId;
+
+      allow write: if isAuthed() && (
+        uid() == userId
+        || (
+          // A parent clearing another user's family membership
+          request.resource.data.diff(resource.data)
+            .affectedKeys()
+            .hasOnly(["familyId", "role", "kidId"])
+        )
+      );
+    }
+
+    // ── invitations/{invId} ───────────────────────────────────────────────────
+    // Top-level so they can be queried by email at sign-in.
+
+    match /invitations/{invId} {
+      // Invitee can read their own invitations; family parents can read all
+      allow read: if isAuthed() && (
+        resource.data.email == request.auth.token.email
+        || isParentOf(resource.data.familyId)
+      );
+      // Only a family parent can create an invitation for their family
+      allow create: if isAuthed()
+        && isParentOf(request.resource.data.familyId)
+        && request.resource.data.invitedBy == uid();
+      // Invitee accepting or parent cancelling
+      allow delete: if isAuthed() && (
+        resource.data.email == request.auth.token.email
+        || isParentOf(resource.data.familyId)
+      );
+      allow update: if false;
+    }
+
+    // ── families/{familyId} ──────────────────────────────────────────────────
+
+    match /families/{familyId} {
+      allow read:   if isAuthed() && isMemberOf(familyId);
+      // Any authed user may create a new family (they become ownerId)
+      allow create: if isAuthed()
+        && request.resource.data.ownerId == uid();
+      allow update: if isAuthed() && isParentOf(familyId);
+      allow delete: if false;
+
+      // ── members ────────────────────────────────────────────────────────────
+      match /members/{memberId} {
+        allow read: if isAuthed() && isMemberOf(familyId);
+        allow create: if isAuthed() && (
+          uid() == memberId          // user joining themselves (create/join flow)
+          || isParentOf(familyId)    // parent adding a member
+        );
+        allow update: if isAuthed() && isParentOf(familyId);
+        allow delete: if isAuthed() && isParentOf(familyId);
+      }
+
+      // ── kids ───────────────────────────────────────────────────────────────
+      match /kids/{kidId} {
+        allow read:  if isAuthed() && isMemberOf(familyId);
+        allow write: if isAuthed() && isParentOf(familyId);
+
+        // ── journal ──────────────────────────────────────────────────────────
+        match /journal/{entryId} {
+          allow read:   if isAuthed() && isMemberOf(familyId);
+          allow create: if isAuthed() && isParentOf(familyId);
+          allow update: if isAuthed() && isParentOf(familyId);
+          allow delete: if isAuthed() && isParentOf(familyId);
+        }
+      }
+
+      // ── activities ─────────────────────────────────────────────────────────
+      match /activities/{activityId} {
+        allow read:  if isAuthed() && isMemberOf(familyId);
+        allow write: if isAuthed() && isParentOf(familyId);
+      }
+
+      // ── completions (append-only) ─────────────────────────────────────────
+      match /completions/{completionId} {
+        allow read:   if isAuthed() && isMemberOf(familyId);
+        allow create: if isAuthed() && isParentOf(familyId)
+          && request.resource.data.completedBy == uid()
+          && request.resource.data.date is string;
+        allow update, delete: if false;
+      }
+
+      // ── classes ────────────────────────────────────────────────────────────
+      match /classes/{classId} {
+        allow read:  if isAuthed() && isMemberOf(familyId);
+        allow write: if isAuthed() && isParentOf(familyId);
+      }
+
+      // ── rewards ────────────────────────────────────────────────────────────
+      match /rewards/{rewardId} {
+        allow read:  if isAuthed() && isMemberOf(familyId);
+        allow write: if isAuthed() && isParentOf(familyId);
+      }
+
+      // ── redemptions (append-only) ─────────────────────────────────────────
+      match /redemptions/{redemptionId} {
+        allow read:   if isAuthed() && isMemberOf(familyId);
+        allow create: if isAuthed() && isParentOf(familyId)
+          && request.resource.data.redeemedBy == uid();
+        allow update, delete: if false;
+      }
+    }
+  }
+}
