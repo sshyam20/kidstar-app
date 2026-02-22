@@ -66,14 +66,13 @@ export async function seedFamilyDefaults(familyId: string): Promise<void> {
     { title: "Put laundry away", emoji: "👕", category: "chore", points: 8 },
     { title: "Water the plants", emoji: "🌿", category: "chore", points: 5 },
     { title: "Help with grocery shopping", emoji: "🛒", category: "chore", points: 10 },
-    { title: "Wash the car", emoji: "🚗", category: "chore", points: 15 },
     // Homework / Learning
     { title: "Do homework", emoji: "✏️", category: "homework", points: 10 },
     { title: "Read for 20 minutes", emoji: "📖", category: "homework", points: 8 },
     { title: "Practice instrument", emoji: "🎵", category: "homework", points: 12 },
     { title: "Study for a test", emoji: "🔬", category: "homework", points: 15 },
     { title: "Practice spelling words", emoji: "📚", category: "homework", points: 8 },
-    { title: "Work on a school project", emoji: "🎨", category: "homework", points: 12 },
+    { title: "Draw or create something", emoji: "🎨", category: "homework", points: 8 },
     // Behavior
     { title: "Be kind to siblings", emoji: "🤗", category: "behavior", points: 8 },
     { title: "No screen time complaints", emoji: "📵", category: "behavior", points: 10 },

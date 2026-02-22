@@ -59,7 +59,7 @@ export default function AddActivityScreen({
 
   async function handleSave(): Promise<void> {
     if (!title.trim()) {
-      Alert.alert("Title required", "Please enter an activity title.");
+      Alert.alert("Title required", "Please enter a mission title.");
       return;
     }
     setLoading(true);
@@ -139,7 +139,7 @@ export default function AddActivityScreen({
             ))}
           </View>
 
-          <Text style={styles.label}>Points</Text>
+          <Text style={styles.label}>Stars</Text>
           <View style={styles.stepper}>
             <TouchableOpacity
               style={styles.stepBtn}
@@ -167,7 +167,7 @@ export default function AddActivityScreen({
               disabled={!title.trim()}
             >
               <Text style={styles.buttonText}>
-                {isEditing ? "Save Changes" : "Add Activity"}
+                {isEditing ? "Save Changes" : "Add Mission"}
               </Text>
             </TouchableOpacity>
           )}

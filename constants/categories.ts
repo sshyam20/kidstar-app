@@ -11,7 +11,7 @@ export const CATEGORIES: CategoryMeta[] = [
   { key: "chore", label: "Chore", emoji: "🧹", color: "#FFE4B5" },
   { key: "homework", label: "Homework", emoji: "📚", color: "#B8D8F8" },
   { key: "behavior", label: "Behavior", emoji: "⭐", color: "#C3F0CA" },
-  { key: "class", label: "Class", emoji: "🎓", color: "#E0C3FC" },
+  { key: "class", label: "Skill Academy", emoji: "🎓", color: "#E0C3FC" },
 ];
 
 export function getCategoryMeta(key: ActivityCategory): CategoryMeta {

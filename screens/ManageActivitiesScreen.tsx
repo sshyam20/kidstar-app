@@ -40,7 +40,7 @@ export default function ManageActivitiesScreen({
   }, [navigation]);
 
   function confirmDelete(activity: Activity): void {
-    Alert.alert("Delete Activity", `Delete "${activity.title}"?`, [
+    Alert.alert("Delete Mission", `Delete "${activity.title}"?`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
@@ -59,7 +59,7 @@ export default function ManageActivitiesScreen({
         ListEmptyComponent={
           loading ? null : (
             <Text style={styles.empty}>
-              No activities yet. Tap "+ Add" to create one.
+              No missions yet. Tap "+ Add" to create one.
             </Text>
           )
         }

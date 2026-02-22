@@ -34,11 +34,9 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: [
-    "https://homehero-app.web.app",
     "https://kidstar-app.web.app",
     "http://localhost:8081",
     "http://localhost:19006",
-    "homehero://",
     "kidstar://",
   ],
   config: {
@@ -134,27 +132,27 @@ function RootNavigator(): React.ReactElement {
       <Stack.Screen
         name="ManageActivities"
         component={ManageActivitiesScreen}
-        options={{ title: "Activities" }}
+        options={{ title: "Missions" }}
       />
       <Stack.Screen
         name="AddActivity"
         component={AddActivityScreen}
-        options={{ title: "Activity", presentation: "modal" }}
+        options={{ title: "Mission", presentation: "modal" }}
       />
       <Stack.Screen
         name="ManageClasses"
         component={ManageClassesScreen}
-        options={{ title: "Classes" }}
+        options={{ title: "Skill Academy" }}
       />
       <Stack.Screen
         name="AddClass"
         component={AddClassScreen}
-        options={{ title: "Class", presentation: "modal" }}
+        options={{ title: "Add Class", presentation: "modal" }}
       />
       <Stack.Screen
         name="RewardStore"
         component={RewardStoreScreen}
-        options={{ title: "Reward Store" }}
+        options={{ title: "Treasure Chest" }}
       />
       <Stack.Screen
         name="AddReward"

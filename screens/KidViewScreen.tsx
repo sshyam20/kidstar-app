@@ -111,10 +111,10 @@ export default function KidViewScreen({ navigation }: Props): React.ReactElement
           <View style={styles.pointsBadge}>
             <Text style={styles.pointsLabel}>⭐</Text>
             <Text style={styles.pointsValue}>{kid.availablePoints}</Text>
-            <Text style={styles.pointsUnit}>points</Text>
+            <Text style={styles.pointsUnit}>stars</Text>
           </View>
           <Text style={styles.totalPts}>
-            {kid.totalPoints} total earned
+            {kid.totalPoints} stars earned total
           </Text>
         </View>
 
@@ -134,7 +134,7 @@ export default function KidViewScreen({ navigation }: Props): React.ReactElement
 
         {/* Today's progress */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>Today's Progress</Text>
+          <Text style={styles.cardTitle}>Hero Journey</Text>
           <View style={styles.progressRow}>
             <View style={styles.progressTrack}>
               <View
@@ -160,7 +160,7 @@ export default function KidViewScreen({ navigation }: Props): React.ReactElement
         {todayClasses.length > 0 && (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>
-              Today's Classes — {DAYS[todayDow]}
+              Skill Academy — {DAYS[todayDow]}
             </Text>
             {todayClasses.map((cls) => (
               <View key={cls.id} style={styles.classRow}>
@@ -176,9 +176,9 @@ export default function KidViewScreen({ navigation }: Props): React.ReactElement
 
         {/* Activities */}
         <View style={styles.card}>
-          <Text style={styles.cardTitle}>⚡ My Tasks</Text>
+          <Text style={styles.cardTitle}>⚡ My Missions</Text>
           {activities.length === 0 ? (
-            <Text style={styles.emptyText}>No tasks yet.</Text>
+            <Text style={styles.emptyText}>No missions yet.</Text>
           ) : (
             activities.map((activity) => {
               const done = completedSet.has(`${kid.id}:${activity.id}`);
@@ -199,7 +199,7 @@ export default function KidViewScreen({ navigation }: Props): React.ReactElement
                   {done ? (
                     <Text style={styles.doneCheck}>✓</Text>
                   ) : (
-                    <Text style={styles.activityPts}>+{activity.points}</Text>
+                    <Text style={styles.activityPts}>+{activity.points}⭐</Text>
                   )}
                 </View>
               );

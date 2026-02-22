@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "HomeHero",
-    "slug": "homehero",
+    "name": "KidStar",
+    "slug": "kidstar",
     "version": "1.0.0",
-    "scheme": "homehero",
+    "scheme": "kidstar",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -15,11 +15,11 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.homehero.app",
+      "bundleIdentifier": "com.kidstar.app",
       "usesAppleSignIn": true
     },
     "android": {
-      "package": "com.homehero.app",
+      "package": "com.kidstar.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2563EB"
@@ -37,8 +37,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "HomeHero needs access to your photos to add journal images.",
-          "cameraPermission": "HomeHero needs camera access to take journal photos."
+          "photosPermission": "KidStar needs access to your photos to add journal images.",
+          "cameraPermission": "KidStar needs camera access to take journal photos."
         }
       ]
     ],

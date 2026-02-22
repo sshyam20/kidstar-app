@@ -55,15 +55,15 @@ export default function RewardStoreScreen({ navigation }: Props): React.ReactEle
     }
     if (selectedKid.availablePoints < reward.pointCost) {
       Alert.alert(
-        "Not enough points",
-        `${selectedKid.name} has ${selectedKid.availablePoints} pts but needs ${reward.pointCost} pts.`
+        "Not enough stars",
+        `${selectedKid.name} has ${selectedKid.availablePoints}⭐ but needs ${reward.pointCost}⭐.`
       );
       return;
     }
 
     Alert.alert(
       "Redeem Reward?",
-      `Use ${reward.pointCost} pts to get "${reward.title}" for ${selectedKid.name}?`,
+      `Use ${reward.pointCost}⭐ to get "${reward.title}" for ${selectedKid.name}?`,
       [
         { text: "Cancel", style: "cancel" },
         {
@@ -139,7 +139,7 @@ export default function RewardStoreScreen({ navigation }: Props): React.ReactEle
               <View>
                 <Text style={styles.kidName}>{kid.name}</Text>
                 <Text style={styles.kidPts}>
-                  ⭐ {kid.availablePoints} available
+                  ⭐ {kid.availablePoints} stars
                 </Text>
               </View>
             </TouchableOpacity>
@@ -152,7 +152,7 @@ export default function RewardStoreScreen({ navigation }: Props): React.ReactEle
           <Text style={styles.balanceText}>
             {selectedKid.name}'s balance:{" "}
             <Text style={styles.balanceAmt}>
-              ⭐ {selectedKid.availablePoints} pts
+              ⭐ {selectedKid.availablePoints} stars
             </Text>
           </Text>
         </View>
@@ -187,7 +187,7 @@ export default function RewardStoreScreen({ navigation }: Props): React.ReactEle
                   <Text style={[styles.rewardTitle, item.isPaused && styles.rewardTitlePaused]}>
                     {item.title}
                   </Text>
-                  <Text style={styles.rewardCost}>⭐ {item.pointCost} pts</Text>
+                  <Text style={styles.rewardCost}>⭐ {item.pointCost} stars</Text>
                 </View>
                 <View style={styles.rewardActions}>
                   <TouchableOpacity

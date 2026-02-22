@@ -15,6 +15,8 @@ export interface Kid {
   color: string;
   availablePoints: number;
   totalPoints: number;
+  streak?: number;
+  lastCompletionDate?: string; // YYYY-MM-DD
   createdAt: Timestamp;
 }
 
@@ -82,7 +84,7 @@ export interface Invitation {
   email: string;
   familyId: string;
   familyName: string;
-  invitedBy: string; // uid
+  invitedBy: string;
   role: UserRole;
   createdAt: Timestamp;
 }
@@ -95,7 +97,7 @@ export interface JournalEntry {
   title: string;
   description: string;
   moodTag: MoodTag;
-  date: string; // YYYY-MM-DD
+  date: string;
   photoUrl?: string;
   createdAt: Timestamp;
 }

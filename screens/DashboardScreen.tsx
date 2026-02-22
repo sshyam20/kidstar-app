@@ -22,6 +22,8 @@ import { recordCompletion, getTodayDate } from "../services/completions";
 import { signOut } from "../services/auth";
 import KidCard from "../components/KidCard";
 import ActivityItem from "../components/ActivityItem";
+import SparkleOverlay from "../components/SparkleOverlay";
+import LevelUpModal from "../components/LevelUpModal";
 import { useToast } from "../context/ToastContext";
 import { Activity, Kid, ClassSchedule } from "../types";
 
@@ -43,6 +45,8 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
   const { completedSet } = useTodayCompletions();
   const { classes } = useClasses();
   const [selectedKidId, setSelectedKidId] = useState<string | null>(null);
+  const [sparkleVisible, setSparkleVisible] = useState(false);
+  const [levelUpMilestone, setLevelUpMilestone] = useState<number | null>(null);
 
   const selectedKid: Kid | null =
     kids.find((k) => k.id === selectedKidId) ?? kids[0] ?? null;
@@ -66,7 +70,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: true,
-      title: "HomeHero",
+      title: "KidStar",
       headerRight: () => (
         <View style={styles.headerBtns}>
           {(
@@ -97,14 +101,41 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     if (completedSet.has(key)) return;
 
     try {
-      await recordCompletion(familyId, {
+      const result = await recordCompletion(familyId, {
         kidId: selectedKid.id,
         activityId: activity.id,
         completedBy: user.uid,
         points: activity.points,
         date: getTodayDate(),
       });
-      showToast(`${selectedKid.name} earned ${activity.points} pts! ⭐`);
+
+      // Sparkle burst
+      setSparkleVisible(true);
+
+      // Base toast
+      showToast(`${selectedKid.name} earned ${activity.points}⭐ Mission Complete!`);
+
+      // Lucky star toast
+      if (result.luckyBonus > 0) {
+        setTimeout(() => {
+          showToast(`Lucky Star! +${result.luckyBonus}⭐ bonus!`);
+        }, 800);
+      }
+
+      // Streak bonus toast
+      if (result.streakBonus > 0) {
+        setTimeout(() => {
+          showToast(`🔥 ${result.newStreak}-day streak! +${result.streakBonus}⭐ bonus!`);
+        }, 1600);
+      }
+
+      // Level-up modal
+      if (result.leveledUp) {
+        const milestone = Math.floor(result.newTotal / 100) * 100;
+        setTimeout(() => {
+          setLevelUpMilestone(milestone);
+        }, 2000);
+      }
     } catch {
       Alert.alert("Error", "Could not record completion. Please try again.");
     }
@@ -151,7 +182,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       {/* Today's classes for selected kid */}
       {selectedKidTodayClasses.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>📅 Today's Classes</Text>
+          <Text style={styles.sectionTitle}>📅 Skill Academy Today</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -173,7 +204,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
       {/* Activities header */}
       <View style={styles.activitiesHeader}>
         <Text style={styles.sectionTitle}>
-          {selectedKid ? `⚡ ${selectedKid.name}'s Tasks` : "⚡ Tasks"}
+          {selectedKid ? `⚡ ${selectedKid.name}'s Missions` : "⚡ Missions"}
         </Text>
         {selectedKid && (
           <View style={styles.progressPill}>
@@ -211,7 +242,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
           >
             <Text style={styles.emptyIcon}>📋</Text>
             <Text style={styles.emptyActivitiesText}>
-              No tasks yet — tap to set some up
+              No missions yet — tap to set some up
             </Text>
           </TouchableOpacity>
         }
@@ -220,6 +251,17 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
             <Text style={styles.signOutText}>Sign Out</Text>
           </TouchableOpacity>
         }
+      />
+
+      <SparkleOverlay
+        visible={sparkleVisible}
+        onDone={() => setSparkleVisible(false)}
+      />
+
+      <LevelUpModal
+        visible={levelUpMilestone !== null}
+        milestone={levelUpMilestone ?? 0}
+        onDismiss={() => setLevelUpMilestone(null)}
       />
     </SafeAreaView>
   );

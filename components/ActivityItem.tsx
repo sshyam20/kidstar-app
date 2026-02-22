@@ -42,7 +42,7 @@ export default function ActivityItem({
         {isCompleted ? (
           <Text style={styles.check}>✓</Text>
         ) : (
-          <Text style={styles.pts}>+{activity.points}</Text>
+          <Text style={styles.pts}>+{activity.points}⭐</Text>
         )}
       </View>
     </TouchableOpacity>

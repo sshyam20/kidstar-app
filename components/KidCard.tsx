@@ -14,6 +14,17 @@ interface Props {
   onPress: (kid: Kid) => void;
 }
 
+function getTodayStr(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+}
+
+function getYesterdayStr(): string {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export default function KidCard({
   kid,
   isSelected,
@@ -24,6 +35,13 @@ export default function KidCard({
 }: Props): React.ReactElement {
   const progress = totalActivities > 0 ? completedCount / totalActivities : 0;
   const progressPct = Math.round(progress * 100);
+
+  // Effective streak: show 0 if last completion wasn't today or yesterday
+  const today = getTodayStr();
+  const yesterday = getYesterdayStr();
+  const lastDate = kid.lastCompletionDate ?? null;
+  const effectiveStreak =
+    (lastDate === today || lastDate === yesterday) ? (kid.streak ?? 0) : 0;
 
   return (
     <TouchableOpacity
@@ -56,6 +74,12 @@ export default function KidCard({
       <Text style={styles.sub}>
         {completedCount}/{totalActivities} today
       </Text>
+
+      {effectiveStreak > 0 && (
+        <View style={styles.streakBadge}>
+          <Text style={styles.streakText}>🔥 {effectiveStreak}</Text>
+        </View>
+      )}
 
       {todayClassCount > 0 && (
         <View style={styles.classBadge}>
@@ -133,6 +157,13 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   sub: { fontSize: moderateScale(10), color: COLORS.textSecondary },
+  streakBadge: {
+    backgroundColor: "#FFF3E0",
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  streakText: { fontSize: moderateScale(10), fontWeight: "700", color: "#E65100" },
   classBadge: {
     backgroundColor: COLORS.purple + "15",
     borderRadius: 8,

@@ -46,7 +46,7 @@ export default function ManageClassesScreen({ navigation }: Props): React.ReactE
   }, [navigation]);
 
   function confirmDelete(cls: ClassSchedule): void {
-    Alert.alert("Delete Class", `Delete "${cls.name}"?`, [
+    Alert.alert("Delete Skill Academy Class", `Delete "${cls.name}"?`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
@@ -64,7 +64,7 @@ export default function ManageClassesScreen({ navigation }: Props): React.ReactE
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           loading ? null : (
-            <Text style={styles.empty}>No classes yet. Tap "+ Add" to schedule one.</Text>
+            <Text style={styles.empty}>No classes yet. Tap "+ Add" to add one.</Text>
           )
         }
         renderItem={({ item }) => (

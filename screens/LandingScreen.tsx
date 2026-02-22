@@ -19,10 +19,10 @@ type Props = {
 };
 
 const FEATURES = [
-  { icon: "⭐", label: "Earn Points" },
-  { icon: "🎁", label: "Claim Rewards" },
-  { icon: "📅", label: "Track Progress" },
-  { icon: "🎓", label: "Classes" },
+  { icon: "⭐", label: "Earn Stars" },
+  { icon: "🎁", label: "Treasure Chest" },
+  { icon: "🦸", label: "Hero Journey" },
+  { icon: "🎓", label: "Skill Academy" },
 ];
 
 export default function LandingScreen({ navigation }: Props): React.ReactElement {
@@ -37,12 +37,12 @@ export default function LandingScreen({ navigation }: Props): React.ReactElement
         {/* Hero section */}
         <View style={styles.hero}>
           <View style={styles.logoRow}>
-            <Text style={styles.logoEmoji}>🏠</Text>
-            <Text style={styles.logoStar}>⭐</Text>
+            <Text style={styles.logoEmoji}>⭐</Text>
+            <Text style={styles.logoStar}>🦸</Text>
           </View>
-          <Text style={styles.brand}>HomeHero</Text>
+          <Text style={styles.brand}>KidStar</Text>
           <Text style={styles.tagline}>
-            Turn everyday tasks into{"\n"}family adventures
+            Earn stars. Unlock rewards.{"\n"}Become a hero.
           </Text>
 
           {/* Feature pills */}
@@ -58,25 +58,25 @@ export default function LandingScreen({ navigation }: Props): React.ReactElement
           {/* Decoration */}
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
-              <Text style={styles.statNum}>🏆</Text>
-              <Text style={styles.statLabel}>Achievements</Text>
+              <Text style={styles.statNum}>🔥</Text>
+              <Text style={styles.statLabel}>Daily Streaks</Text>
             </View>
             <View style={styles.statCard}>
-              <Text style={styles.statNum}>🌟</Text>
-              <Text style={styles.statLabel}>Daily Goals</Text>
+              <Text style={styles.statNum}>🏆</Text>
+              <Text style={styles.statLabel}>Power Badges</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statNum}>🎉</Text>
-              <Text style={styles.statLabel}>Family Fun</Text>
+              <Text style={styles.statLabel}>Daily Missions</Text>
             </View>
           </View>
         </View>
 
         {/* Action card */}
         <View style={styles.actionCard}>
-          <Text style={styles.actionTitle}>Ready to become heroes?</Text>
+          <Text style={styles.actionTitle}>Welcome to KidStar ⭐</Text>
           <Text style={styles.actionSub}>
-            Set up your family in seconds — activities and rewards are ready to go.
+            Set up your family in seconds — missions and rewards are ready to go.
           </Text>
 
           <TouchableOpacity
@@ -84,7 +84,7 @@ export default function LandingScreen({ navigation }: Props): React.ReactElement
             onPress={() => navigation.navigate("Login")}
             activeOpacity={0.85}
           >
-            <Text style={styles.primaryButtonText}>🚀  Get Started</Text>
+            <Text style={styles.primaryButtonText}>🚀 Start My Adventure</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -92,9 +92,7 @@ export default function LandingScreen({ navigation }: Props): React.ReactElement
             onPress={() => navigation.navigate("Login")}
             activeOpacity={0.7}
           >
-            <Text style={styles.secondaryButtonText}>
-              Already have an account? Sign In
-            </Text>
+            <Text style={styles.secondaryButtonText}>Sign In</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
