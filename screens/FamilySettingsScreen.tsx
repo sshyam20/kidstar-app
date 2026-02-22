@@ -11,8 +11,10 @@ import {
   ActivityIndicator,
 } from "react-native";
 import * as Clipboard from "expo-clipboard";
+import { CompositeScreenProps } from "@react-navigation/native";
+import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../constants/navigation";
+import { ParentTabParamList, RootStackParamList } from "../constants/navigation";
 import { COLORS, SPACING } from "../constants";
 import { useFamilyId } from "../context/FamilyContext";
 import { useAuth } from "../hooks/useAuth";
@@ -24,10 +26,14 @@ import {
   cancelInvitation,
   getFamilyPendingInvitations,
 } from "../services/invitations";
+import { updateDisplayName, getSignInProvider } from "../services/auth";
 import { useToast } from "../context/ToastContext";
 import { Family, FamilyMember, Invitation, UserRole } from "../types";
 
-type Props = NativeStackScreenProps<RootStackParamList, "FamilySettings">;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<ParentTabParamList, "Family">,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 export default function FamilySettingsScreen({ navigation }: Props): React.ReactElement {
   const { user } = useAuth();
@@ -41,9 +47,15 @@ export default function FamilySettingsScreen({ navigation }: Props): React.React
   const [inviteRole, setInviteRole] = useState<UserRole>("parent");
   const [inviting, setInviting] = useState(false);
   const [codeCopied, setCodeCopied] = useState(false);
+  const [displayName, setDisplayName] = useState(user?.displayName ?? "");
+  const [editingName, setEditingName] = useState(false);
+  const [savingName, setSavingName] = useState(false);
 
   useLayoutEffect(() => {
-    navigation.setOptions({ title: "Family Settings" });
+    navigation.setOptions({
+      headerShown: true,
+      title: "Family",
+    });
   }, [navigation]);
 
   useEffect(() => {
@@ -63,6 +75,20 @@ export default function FamilySettingsScreen({ navigation }: Props): React.React
     await Clipboard.setStringAsync(family.joinCode);
     setCodeCopied(true);
     setTimeout(() => setCodeCopied(false), 2000);
+  }
+
+  async function handleSaveDisplayName(): Promise<void> {
+    if (!displayName.trim()) return;
+    setSavingName(true);
+    try {
+      await updateDisplayName(displayName.trim());
+      showToast("Name updated");
+      setEditingName(false);
+    } catch {
+      Alert.alert("Error", "Could not update name.");
+    } finally {
+      setSavingName(false);
+    }
   }
 
   async function handleInvite(): Promise<void> {
@@ -86,21 +112,17 @@ export default function FamilySettingsScreen({ navigation }: Props): React.React
   }
 
   async function handleCancelInvite(inv: Invitation): Promise<void> {
-    Alert.alert(
-      "Cancel invitation",
-      `Remove invitation for ${inv.email}?`,
-      [
-        { text: "Keep", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            await cancelInvitation(inv.id);
-            await loadPendingInvites();
-          },
+    Alert.alert("Cancel invitation", `Remove invitation for ${inv.email}?`, [
+      { text: "Keep", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: async () => {
+          await cancelInvitation(inv.id);
+          await loadPendingInvites();
         },
-      ]
-    );
+      },
+    ]);
   }
 
   async function handleChangeRole(member: FamilyMember, newRole: UserRole): Promise<void> {
@@ -125,31 +147,91 @@ export default function FamilySettingsScreen({ navigation }: Props): React.React
       Alert.alert("Cannot remove", "You cannot remove yourself. Sign out instead.");
       return;
     }
-    Alert.alert(
-      "Remove member",
-      `Remove ${member.displayName || member.email} from your family?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Remove",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              await removeMember(familyId, member.uid);
-            } catch (err: unknown) {
-              Alert.alert("Error", err instanceof Error ? err.message : "Could not remove member.");
-            }
-          },
+    Alert.alert("Remove member", `Remove ${member.displayName || member.email} from your family?`, [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await removeMember(familyId, member.uid);
+          } catch (err: unknown) {
+            Alert.alert("Error", err instanceof Error ? err.message : "Could not remove member.");
+          }
         },
-      ]
-    );
+      },
+    ]);
   }
 
   const isOwner = user?.uid === family?.ownerId;
+  const signInProvider = getSignInProvider();
 
   return (
     <SafeAreaView style={styles.safe}>
       <ScrollView contentContainerStyle={styles.scroll}>
+
+        {/* Account section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>ACCOUNT</Text>
+          <View style={styles.accountRow}>
+            <Text style={styles.accountLabel}>Signed in with</Text>
+            <Text style={styles.accountValue}>{signInProvider}</Text>
+          </View>
+          <View style={styles.accountRow}>
+            <Text style={styles.accountLabel}>Email</Text>
+            <Text style={styles.accountValue} numberOfLines={1}>
+              {user?.email ?? "—"}
+            </Text>
+          </View>
+          {editingName ? (
+            <View style={styles.nameEditRow}>
+              <TextInput
+                style={styles.nameInput}
+                value={displayName}
+                onChangeText={setDisplayName}
+                placeholder="Your display name"
+                placeholderTextColor={COLORS.textSecondary}
+                autoFocus
+                returnKeyType="done"
+                onSubmitEditing={handleSaveDisplayName}
+              />
+              {savingName ? (
+                <ActivityIndicator color={COLORS.primary} />
+              ) : (
+                <TouchableOpacity onPress={handleSaveDisplayName} style={styles.saveNameBtn}>
+                  <Text style={styles.saveNameBtnText}>Save</Text>
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                onPress={() => { setEditingName(false); setDisplayName(user?.displayName ?? ""); }}
+              >
+                <Text style={styles.cancelNameText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.accountRow}>
+              <Text style={styles.accountLabel}>Display name</Text>
+              <View style={styles.nameRow}>
+                <Text style={styles.accountValue}>{user?.displayName || "Not set"}</Text>
+                <TouchableOpacity onPress={() => setEditingName(true)} style={styles.editNameBtn}>
+                  <Text style={styles.editNameBtnText}>Edit</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+
+        {/* Heroes (kids) */}
+        <TouchableOpacity
+          style={styles.heroesBtn}
+          onPress={() => navigation.navigate("ManageKids")}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.heroesBtnEmoji}>👶</Text>
+          <Text style={styles.heroesBtnText}>Manage Heroes</Text>
+          <Text style={styles.heroesBtnArrow}>›</Text>
+        </TouchableOpacity>
+
         {/* Join code */}
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>FAMILY JOIN CODE</Text>
@@ -182,38 +264,17 @@ export default function FamilySettingsScreen({ navigation }: Props): React.React
                 </View>
                 {isOwner && member.uid !== family?.ownerId ? (
                   <View style={styles.memberActions}>
-                    <TouchableOpacity
-                      style={[
-                        styles.roleChip,
-                        member.role === "parent" && styles.roleChipActive,
-                      ]}
-                      onPress={() => handleChangeRole(member, "parent")}
-                    >
-                      <Text
-                        style={[
-                          styles.roleChipText,
-                          member.role === "parent" && styles.roleChipTextActive,
-                        ]}
+                    {(["parent", "kid"] as UserRole[]).map((r) => (
+                      <TouchableOpacity
+                        key={r}
+                        style={[styles.roleChip, member.role === r && styles.roleChipActive]}
+                        onPress={() => handleChangeRole(member, r)}
                       >
-                        Parent
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[
-                        styles.roleChip,
-                        member.role === "kid" && styles.roleChipActive,
-                      ]}
-                      onPress={() => handleChangeRole(member, "kid")}
-                    >
-                      <Text
-                        style={[
-                          styles.roleChipText,
-                          member.role === "kid" && styles.roleChipTextActive,
-                        ]}
-                      >
-                        Kid
-                      </Text>
-                    </TouchableOpacity>
+                        <Text style={[styles.roleChipText, member.role === r && styles.roleChipTextActive]}>
+                          {r.charAt(0).toUpperCase() + r.slice(1)}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
                     <TouchableOpacity
                       style={styles.removeBtn}
                       onPress={() => handleRemoveMember(member)}
@@ -254,7 +315,7 @@ export default function FamilySettingsScreen({ navigation }: Props): React.React
           </View>
         )}
 
-        {/* Invite by email (owner only) */}
+        {/* Invite by email */}
         {isOwner && (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>INVITE BY EMAIL</Text>
@@ -275,12 +336,7 @@ export default function FamilySettingsScreen({ navigation }: Props): React.React
                   style={[styles.roleOption, inviteRole === r && styles.roleOptionActive]}
                   onPress={() => setInviteRole(r)}
                 >
-                  <Text
-                    style={[
-                      styles.roleOptionText,
-                      inviteRole === r && styles.roleOptionTextActive,
-                    ]}
-                  >
+                  <Text style={[styles.roleOptionText, inviteRole === r && styles.roleOptionTextActive]}>
                     {r.charAt(0).toUpperCase() + r.slice(1)}
                   </Text>
                 </TouchableOpacity>
@@ -308,7 +364,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   scroll: { padding: SPACING.lg, paddingBottom: SPACING.xxl },
   section: {
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
     backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: SPACING.md,
@@ -322,24 +378,68 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: SPACING.sm,
   },
-  codeRow: {
+  accountRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: SPACING.xs,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  accountLabel: { fontSize: 14, color: COLORS.textSecondary },
+  accountValue: { fontSize: 14, fontWeight: "600", color: COLORS.text, maxWidth: "60%" },
+  nameRow: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
+  editNameBtn: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 3,
+    borderRadius: 8,
+    backgroundColor: COLORS.primary + "18",
+  },
+  editNameBtnText: { fontSize: 12, color: COLORS.primary, fontWeight: "600" },
+  nameEditRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: SPACING.md,
-    marginBottom: SPACING.xs,
+    gap: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
   },
-  code: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: COLORS.text,
-    letterSpacing: 6,
-  },
-  copyBtn: {
-    backgroundColor: COLORS.primary,
+  nameInput: {
+    flex: 1,
+    backgroundColor: COLORS.background,
     borderRadius: 8,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    fontSize: 14,
+    color: COLORS.text,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
+  saveNameBtn: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+  },
+  saveNameBtnText: { color: "#FFF", fontWeight: "700", fontSize: 13 },
+  cancelNameText: { fontSize: 13, color: COLORS.textSecondary },
+  heroesBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    gap: SPACING.sm,
+  },
+  heroesBtnEmoji: { fontSize: 24 },
+  heroesBtnText: { flex: 1, fontSize: 16, fontWeight: "700", color: COLORS.text },
+  heroesBtnArrow: { fontSize: 22, color: COLORS.textSecondary },
+  codeRow: { flexDirection: "row", alignItems: "center", gap: SPACING.md, marginBottom: SPACING.xs },
+  code: { fontSize: 28, fontWeight: "800", color: COLORS.text, letterSpacing: 6 },
+  copyBtn: { backgroundColor: COLORS.primary, borderRadius: 8, paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm },
   copyBtnText: { color: "#FFF", fontWeight: "700", fontSize: 13 },
   codeHint: { fontSize: 13, color: COLORS.textSecondary, lineHeight: 18 },
   memberRow: {
@@ -353,49 +453,19 @@ const styles = StyleSheet.create({
   memberName: { fontSize: 15, fontWeight: "600", color: COLORS.text },
   memberEmail: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
   memberActions: { flexDirection: "row", gap: SPACING.xs, alignItems: "center" },
-  roleChip: {
-    borderRadius: 8,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
+  roleChip: { borderRadius: 8, paddingHorizontal: SPACING.sm, paddingVertical: 4, borderWidth: 1, borderColor: COLORS.border },
   roleChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   roleChipText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: "600" },
   roleChipTextActive: { color: "#FFF" },
-  removeBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: COLORS.error,
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  removeBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.error, alignItems: "center", justifyContent: "center" },
   removeBtnText: { color: "#FFF", fontSize: 13, fontWeight: "700" },
-  roleTag: {
-    backgroundColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-  },
+  roleTag: { backgroundColor: COLORS.border, borderRadius: 8, paddingHorizontal: SPACING.sm, paddingVertical: 4 },
   roleTagText: { fontSize: 12, color: COLORS.textSecondary, fontWeight: "600" },
-  inviteRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: SPACING.sm,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-  },
+  inviteRow: { flexDirection: "row", alignItems: "center", paddingVertical: SPACING.sm, borderTopWidth: 1, borderTopColor: COLORS.border },
   inviteInfo: { flex: 1 },
   inviteEmail: { fontSize: 14, color: COLORS.text, fontWeight: "500" },
   inviteRole: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  cancelInviteBtn: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.error,
-  },
+  cancelInviteBtn: { paddingHorizontal: SPACING.sm, paddingVertical: 4, borderRadius: 8, borderWidth: 1, borderColor: COLORS.error },
   cancelInviteBtnText: { fontSize: 12, color: COLORS.error, fontWeight: "600" },
   input: {
     backgroundColor: COLORS.background,
@@ -409,24 +479,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
   },
   roleRow: { flexDirection: "row", gap: SPACING.sm, marginBottom: SPACING.md },
-  roleOption: {
-    flex: 1,
-    borderRadius: 10,
-    paddingVertical: SPACING.sm,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
+  roleOption: { flex: 1, borderRadius: 10, paddingVertical: SPACING.sm, alignItems: "center", borderWidth: 1, borderColor: COLORS.border },
   roleOptionActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   roleOptionText: { fontSize: 14, fontWeight: "600", color: COLORS.textSecondary },
   roleOptionTextActive: { color: "#FFF" },
   loader: { marginVertical: SPACING.sm },
-  inviteBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: SPACING.sm,
-    alignItems: "center",
-  },
+  inviteBtn: { backgroundColor: COLORS.primary, borderRadius: 12, paddingVertical: SPACING.sm, alignItems: "center" },
   inviteBtnDisabled: { opacity: 0.4 },
   inviteBtnText: { color: "#FFF", fontSize: 15, fontWeight: "700" },
 });

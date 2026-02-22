@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import { db } from "../services/firebase";
 import { addClass, updateClass } from "../services/classes";
 import { ClassSchedule } from "../types";
 import EmojiPicker from "../components/EmojiPicker";
+import HomeButton from "../components/HomeButton";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddClass">;
 
@@ -47,6 +48,12 @@ export default function AddClassScreen({
   const [selectedKidIds, setSelectedKidIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(isEditing);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => <HomeButton navigation={navigation} />,
+    });
+  }, [navigation]);
 
   useEffect(() => {
     if (!classId) return;

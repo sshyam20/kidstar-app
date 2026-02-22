@@ -17,6 +17,7 @@ import { deleteJournalEntry } from "../services/journal";
 import { useFamilyId, useRole } from "../context/FamilyContext";
 import { JournalEntry, MoodTag } from "../types";
 import SwipeableRow from "../components/SwipeableRow";
+import HomeButton from "../components/HomeButton";
 
 type Props = NativeStackScreenProps<RootStackParamList, "Journal">;
 
@@ -41,17 +42,19 @@ export default function JournalScreen({ navigation, route }: Props): React.React
   useLayoutEffect(() => {
     navigation.setOptions({
       title: `${kidName}'s Journal`,
-      headerRight:
-        role === "parent"
-          ? () => (
-              <TouchableOpacity
-                onPress={() => navigation.navigate("AddJournalEntry", { kidId })}
-                style={styles.headerBtn}
-              >
-                <Text style={styles.headerBtnText}>+ Add</Text>
-              </TouchableOpacity>
-            )
-          : undefined,
+      headerRight: () => (
+        <View style={styles.headerRight}>
+          <HomeButton navigation={navigation} />
+          {role === "parent" && (
+            <TouchableOpacity
+              onPress={() => navigation.navigate("AddJournalEntry", { kidId })}
+              style={styles.headerBtn}
+            >
+              <Text style={styles.headerBtnText}>+ Add</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      ),
     });
   }, [navigation, kidName, kidId, role]);
 
@@ -131,6 +134,7 @@ export default function JournalScreen({ navigation, route }: Props): React.React
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
   headerBtn: { paddingHorizontal: SPACING.sm },
   headerBtnText: { color: COLORS.primary, fontWeight: "600", fontSize: 15 },
   list: { padding: SPACING.md, gap: SPACING.sm },

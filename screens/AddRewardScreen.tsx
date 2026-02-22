@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import { db } from "../services/firebase";
 import { addReward, updateReward } from "../services/rewards";
 import { Reward } from "../types";
 import EmojiPicker from "../components/EmojiPicker";
+import HomeButton from "../components/HomeButton";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddReward">;
 
@@ -35,6 +36,12 @@ export default function AddRewardScreen({ navigation, route }: Props): React.Rea
   const [pointCost, setPointCost] = useState(20);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(isEditing);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => <HomeButton navigation={navigation} />,
+    });
+  }, [navigation]);
 
   useEffect(() => {
     if (!rewardId) return;

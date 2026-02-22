@@ -4,6 +4,7 @@ import { Kid } from "../types";
 import { COLORS, SPACING } from "../constants";
 import { scale, moderateScale } from "../constants/layout";
 import ProgressBar from "./ProgressBar";
+import KidAvatar from "./KidAvatar";
 
 interface Props {
   kid: Kid;
@@ -53,8 +54,8 @@ export default function KidCard({
       ]}
       activeOpacity={0.8}
     >
-      <View style={[styles.avatar, { backgroundColor: kid.color }]}>
-        <Text style={styles.avatarEmoji}>{kid.emoji}</Text>
+      <View style={styles.avatarWrap}>
+        <KidAvatar emoji={kid.emoji} color={kid.color} photoUrl={kid.photoUrl} size={AVATAR_W} />
       </View>
 
       <Text style={styles.name} numberOfLines={1}>
@@ -116,18 +117,16 @@ const styles = StyleSheet.create({
     shadowColor: COLORS.primary,
     shadowOpacity: 0.3,
   },
-  avatar: {
+  avatarWrap: {
     width: AVATAR_W,
     height: AVATAR_W,
     borderRadius: AVATAR_W / 2,
-    justifyContent: "center",
-    alignItems: "center",
     shadowOpacity: 0.15,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
+    shadowColor: "#000",
     elevation: 2,
   },
-  avatarEmoji: { fontSize: moderateScale(32) },
   name: {
     fontSize: moderateScale(14),
     fontWeight: "700",

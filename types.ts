@@ -13,6 +13,7 @@ export interface Kid {
   name: string;
   emoji: string;
   color: string;
+  photoUrl?: string;
   availablePoints: number;
   totalPoints: number;
   streak?: number;

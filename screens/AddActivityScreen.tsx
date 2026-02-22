@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import {
   View,
   Text,
@@ -23,6 +23,7 @@ import { db } from "../services/firebase";
 import { addActivity, updateActivity } from "../services/activities";
 import { Activity, ActivityCategory } from "../types";
 import EmojiPicker from "../components/EmojiPicker";
+import HomeButton from "../components/HomeButton";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddActivity">;
 
@@ -40,6 +41,12 @@ export default function AddActivityScreen({
   const [points, setPoints] = useState(5);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(isEditing);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => <HomeButton navigation={navigation} />,
+    });
+  }, [navigation]);
 
   useEffect(() => {
     if (!activityId) return;

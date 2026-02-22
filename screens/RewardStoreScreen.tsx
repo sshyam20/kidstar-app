@@ -9,8 +9,10 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
+import { CompositeScreenProps } from "@react-navigation/native";
+import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../constants/navigation";
+import { ParentTabParamList, RootStackParamList } from "../constants/navigation";
 import { COLORS, SPACING } from "../constants";
 import { useFamilyId } from "../context/FamilyContext";
 import { useKids } from "../hooks/useKids";
@@ -21,7 +23,10 @@ import { useToast } from "../context/ToastContext";
 import { Kid, Reward } from "../types";
 import SwipeableRow from "../components/SwipeableRow";
 
-type Props = NativeStackScreenProps<RootStackParamList, "RewardStore">;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<ParentTabParamList, "Treasure">,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 export default function RewardStoreScreen({ navigation }: Props): React.ReactElement {
   const familyId = useFamilyId();
@@ -36,6 +41,8 @@ export default function RewardStoreScreen({ navigation }: Props): React.ReactEle
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerShown: true,
+      title: "Treasure Chest",
       headerRight: () => (
         <TouchableOpacity
           onPress={() => navigation.navigate("AddReward", {})}
@@ -60,7 +67,6 @@ export default function RewardStoreScreen({ navigation }: Props): React.ReactEle
       );
       return;
     }
-
     Alert.alert(
       "Redeem Reward?",
       `Use ${reward.pointCost}⭐ to get "${reward.title}" for ${selectedKid.name}?`,
@@ -119,7 +125,6 @@ export default function RewardStoreScreen({ navigation }: Props): React.ReactEle
 
   return (
     <SafeAreaView style={styles.safe}>
-      {/* Kid selector */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -138,9 +143,7 @@ export default function RewardStoreScreen({ navigation }: Props): React.ReactEle
               </View>
               <View>
                 <Text style={styles.kidName}>{kid.name}</Text>
-                <Text style={styles.kidPts}>
-                  ⭐ {kid.availablePoints} stars
-                </Text>
+                <Text style={styles.kidPts}>⭐ {kid.availablePoints} stars</Text>
               </View>
             </TouchableOpacity>
           );
@@ -151,9 +154,7 @@ export default function RewardStoreScreen({ navigation }: Props): React.ReactEle
         <View style={styles.balanceBar}>
           <Text style={styles.balanceText}>
             {selectedKid.name}'s balance:{" "}
-            <Text style={styles.balanceAmt}>
-              ⭐ {selectedKid.availablePoints} stars
-            </Text>
+            <Text style={styles.balanceAmt}>⭐ {selectedKid.availablePoints} stars</Text>
           </Text>
         </View>
       )}
@@ -163,9 +164,7 @@ export default function RewardStoreScreen({ navigation }: Props): React.ReactEle
         keyExtractor={(r) => r.id}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
-          <Text style={styles.empty}>
-            No rewards yet. Tap "+ Add" to create one.
-          </Text>
+          <Text style={styles.empty}>No rewards yet. Tap "+ Add" to create one.</Text>
         }
         renderItem={({ item }) => {
           const canAfford =
@@ -194,14 +193,10 @@ export default function RewardStoreScreen({ navigation }: Props): React.ReactEle
                     onPress={() => handleTogglePause(item)}
                     style={[styles.pauseBtn, item.isPaused && styles.pauseBtnActive]}
                   >
-                    <Text style={styles.pauseBtnText}>
-                      {item.isPaused ? "▶" : "⏸"}
-                    </Text>
+                    <Text style={styles.pauseBtnText}>{item.isPaused ? "▶" : "⏸"}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
-                    onPress={() =>
-                      navigation.navigate("AddReward", { rewardId: item.id })
-                    }
+                    onPress={() => navigation.navigate("AddReward", { rewardId: item.id })}
                     style={styles.editBtn}
                   >
                     <Text style={styles.editBtnText}>Edit</Text>
@@ -232,11 +227,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
   headerBtn: { paddingHorizontal: SPACING.sm },
   headerBtnText: { color: COLORS.primary, fontWeight: "600", fontSize: 15 },
-  kidsRow: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    gap: SPACING.sm,
-  },
+  kidsRow: { paddingHorizontal: SPACING.md, paddingVertical: SPACING.sm, gap: SPACING.sm },
   kidChip: {
     flexDirection: "row",
     alignItems: "center",
@@ -248,10 +239,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: "transparent",
   },
-  kidChipSelected: {
-    borderColor: COLORS.primary,
-    backgroundColor: COLORS.primary + "12",
-  },
+  kidChipSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primary + "12" },
   kidAvatar: { width: 40, height: 40, borderRadius: 20, justifyContent: "center", alignItems: "center" },
   kidEmoji: { fontSize: 20 },
   kidName: { fontSize: 14, fontWeight: "700", color: COLORS.text },
@@ -282,13 +270,7 @@ const styles = StyleSheet.create({
   rewardRowPaused: { opacity: 0.6 },
   emojiWrap: { position: "relative", width: 44 },
   rewardEmoji: { fontSize: 28, textAlign: "center" },
-  pauseBadge: {
-    position: "absolute",
-    bottom: -2,
-    right: -2,
-    backgroundColor: COLORS.surface,
-    borderRadius: 8,
-  },
+  pauseBadge: { position: "absolute", bottom: -2, right: -2, backgroundColor: COLORS.surface, borderRadius: 8 },
   pauseIcon: { fontSize: 13 },
   rewardInfo: { flex: 1 },
   rewardTitle: { fontSize: 15, fontWeight: "600", color: COLORS.text },
@@ -320,10 +302,5 @@ const styles = StyleSheet.create({
   },
   redeemBtnDisabled: { backgroundColor: COLORS.border, opacity: 0.5 },
   redeemBtnText: { color: "#FFFFFF", fontWeight: "700", fontSize: 13 },
-  empty: {
-    textAlign: "center",
-    color: COLORS.textSecondary,
-    marginTop: SPACING.xxl,
-    fontSize: 15,
-  },
+  empty: { textAlign: "center", color: COLORS.textSecondary, marginTop: SPACING.xxl, fontSize: 15 },
 });

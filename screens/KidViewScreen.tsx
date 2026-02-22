@@ -20,6 +20,7 @@ import { signOut } from "../services/auth";
 import { db } from "../services/firebase";
 import { Kid, ClassSchedule } from "../types";
 import { RootStackParamList } from "../constants/navigation";
+import KidAvatar from "../components/KidAvatar";
 
 type Props = NativeStackScreenProps<RootStackParamList, "KidView">;
 
@@ -104,8 +105,8 @@ export default function KidViewScreen({ navigation }: Props): React.ReactElement
       <ScrollView contentContainerStyle={styles.scroll}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={[styles.bigAvatar, { backgroundColor: kid.color }]}>
-            <Text style={styles.bigEmoji}>{kid.emoji}</Text>
+          <View style={styles.bigAvatarWrap}>
+            <KidAvatar emoji={kid.emoji} color={kid.color} photoUrl={kid.photoUrl} size={100} />
           </View>
           <Text style={styles.kidName}>{kid.name}</Text>
           <View style={styles.pointsBadge}>
@@ -222,18 +223,13 @@ const styles = StyleSheet.create({
   loadingText: { color: COLORS.textSecondary, fontSize: 16 },
   scroll: { padding: SPACING.lg, gap: SPACING.md },
   header: { alignItems: "center", paddingVertical: SPACING.lg, gap: SPACING.sm },
-  bigAvatar: {
-    width: 100,
-    height: 100,
+  bigAvatarWrap: {
     borderRadius: 50,
-    justifyContent: "center",
-    alignItems: "center",
     shadowColor: "#000",
     shadowOpacity: 0.12,
     shadowRadius: 12,
     elevation: 5,
   },
-  bigEmoji: { fontSize: 52 },
   kidName: { fontSize: 30, fontWeight: "800", color: COLORS.text },
   pointsBadge: {
     flexDirection: "row",

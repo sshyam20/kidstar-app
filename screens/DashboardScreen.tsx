@@ -9,8 +9,8 @@ import {
   SafeAreaView,
   Alert,
 } from "react-native";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../constants/navigation";
+import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import { ParentTabParamList } from "../constants/navigation";
 import { COLORS, SPACING } from "../constants";
 import { useFamilyId } from "../context/FamilyContext";
 import { useKids } from "../hooks/useKids";
@@ -27,7 +27,7 @@ import LevelUpModal from "../components/LevelUpModal";
 import { useToast } from "../context/ToastContext";
 import { Activity, Kid, ClassSchedule } from "../types";
 
-type Props = NativeStackScreenProps<RootStackParamList, "Dashboard">;
+type Props = BottomTabScreenProps<ParentTabParamList, "Home">;
 
 function formatTime(time: string): string {
   const [h, m] = time.split(":").map(Number);
@@ -70,28 +70,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: true,
-      title: "KidStar",
-      headerRight: () => (
-        <View style={styles.headerBtns}>
-          {(
-            [
-              { label: "👶", screen: "ManageKids" },
-              { label: "📋", screen: "ManageActivities" },
-              { label: "🎓", screen: "ManageClasses" },
-              { label: "🎁", screen: "RewardStore" },
-              { label: "⚙️", screen: "FamilySettings" },
-            ] as const
-          ).map(({ label, screen }) => (
-            <TouchableOpacity
-              key={screen}
-              onPress={() => navigation.navigate(screen)}
-              style={styles.headerBtn}
-            >
-              <Text style={styles.headerBtnText}>{label}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-      ),
+      title: "KidStar ⭐",
     });
   }, [navigation]);
 
@@ -109,32 +88,21 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         date: getTodayDate(),
       });
 
-      // Sparkle burst
       setSparkleVisible(true);
-
-      // Base toast
       showToast(`${selectedKid.name} earned ${activity.points}⭐ Mission Complete!`);
 
-      // Lucky star toast
       if (result.luckyBonus > 0) {
-        setTimeout(() => {
-          showToast(`Lucky Star! +${result.luckyBonus}⭐ bonus!`);
-        }, 800);
+        setTimeout(() => showToast(`Lucky Star! +${result.luckyBonus}⭐ bonus!`), 800);
       }
-
-      // Streak bonus toast
       if (result.streakBonus > 0) {
-        setTimeout(() => {
-          showToast(`🔥 ${result.newStreak}-day streak! +${result.streakBonus}⭐ bonus!`);
-        }, 1600);
+        setTimeout(
+          () => showToast(`🔥 ${result.newStreak}-day streak! +${result.streakBonus}⭐ bonus!`),
+          1600
+        );
       }
-
-      // Level-up modal
       if (result.leveledUp) {
         const milestone = Math.floor(result.newTotal / 100) * 100;
-        setTimeout(() => {
-          setLevelUpMilestone(milestone);
-        }, 2000);
+        setTimeout(() => setLevelUpMilestone(milestone), 2000);
       }
     } catch {
       Alert.alert("Error", "Could not record completion. Please try again.");
@@ -170,16 +138,16 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         ))}
         {kids.length === 0 && (
           <TouchableOpacity
-            onPress={() => navigation.navigate("ManageKids")}
+            onPress={() => navigation.navigate("Missions")}
             style={styles.addKidPrompt}
           >
-            <Text style={styles.addKidPromptEmoji}>👶</Text>
-            <Text style={styles.addKidPromptText}>Add your first hero</Text>
+            <Text style={styles.addKidPromptEmoji}>👨‍👩‍👧</Text>
+            <Text style={styles.addKidPromptText}>Go to Family tab to add heroes</Text>
           </TouchableOpacity>
         )}
       </ScrollView>
 
-      {/* Today's classes for selected kid */}
+      {/* Today's classes */}
       {selectedKidTodayClasses.length > 0 && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>📅 Skill Academy Today</Text>
@@ -201,7 +169,7 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
         </View>
       )}
 
-      {/* Activities header */}
+      {/* Missions header */}
       <View style={styles.activitiesHeader}>
         <Text style={styles.sectionTitle}>
           {selectedKid ? `⚡ ${selectedKid.name}'s Missions` : "⚡ Missions"}
@@ -228,21 +196,19 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
           <ActivityItem
             activity={item}
             isCompleted={
-              selectedKid
-                ? completedSet.has(`${selectedKid.id}:${item.id}`)
-                : false
+              selectedKid ? completedSet.has(`${selectedKid.id}:${item.id}`) : false
             }
             onPress={handleActivityPress}
           />
         )}
         ListEmptyComponent={
           <TouchableOpacity
-            onPress={() => navigation.navigate("ManageActivities")}
+            onPress={() => navigation.navigate("Missions")}
             style={styles.emptyActivities}
           >
             <Text style={styles.emptyIcon}>📋</Text>
             <Text style={styles.emptyActivitiesText}>
-              No missions yet — tap to set some up
+              No missions yet — tap Missions tab to set some up
             </Text>
           </TouchableOpacity>
         }
@@ -269,9 +235,6 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
-  headerBtns: { flexDirection: "row", gap: 2 },
-  headerBtn: { padding: 6 },
-  headerBtnText: { fontSize: 20 },
   listContent: { paddingBottom: SPACING.xxl },
   kidsRow: {
     paddingHorizontal: SPACING.md,
@@ -288,11 +251,11 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     justifyContent: "center",
     alignItems: "center",
-    minWidth: 140,
+    minWidth: 180,
     gap: SPACING.xs,
   },
   addKidPromptEmoji: { fontSize: 28 },
-  addKidPromptText: { color: COLORS.primary, fontWeight: "600", fontSize: 13 },
+  addKidPromptText: { color: COLORS.primary, fontWeight: "600", fontSize: 13, textAlign: "center" },
   section: { paddingHorizontal: SPACING.md, marginBottom: SPACING.sm },
   sectionTitle: {
     fontSize: 16,

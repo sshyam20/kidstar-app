@@ -27,6 +27,7 @@ import {
 import { db } from "../services/firebase";
 import { getTodayDate } from "../services/completions";
 import { useToast } from "../context/ToastContext";
+import HomeButton from "../components/HomeButton";
 import { JournalEntry, MoodTag } from "../types";
 
 type Props = NativeStackScreenProps<RootStackParamList, "AddJournalEntry">;
@@ -57,6 +58,7 @@ export default function AddJournalEntryScreen({
   useLayoutEffect(() => {
     navigation.setOptions({
       title: entryId ? "Edit Entry" : "New Entry",
+      headerRight: () => <HomeButton navigation={navigation} />,
     });
   }, [navigation, entryId]);
 

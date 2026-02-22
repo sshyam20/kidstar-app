@@ -16,6 +16,8 @@ import { useKids } from "../hooks/useKids";
 import { deleteKid } from "../services/kids";
 import { Kid } from "../types";
 import SwipeableRow from "../components/SwipeableRow";
+import KidAvatar from "../components/KidAvatar";
+import HomeButton from "../components/HomeButton";
 
 type Props = NativeStackScreenProps<RootStackParamList, "ManageKids">;
 
@@ -26,12 +28,15 @@ export default function ManageKidsScreen({ navigation }: Props): React.ReactElem
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <TouchableOpacity
-          onPress={() => navigation.navigate("AddKid")}
-          style={styles.headerBtn}
-        >
-          <Text style={styles.headerBtnText}>+ Add</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <HomeButton navigation={navigation} />
+          <TouchableOpacity
+            onPress={() => navigation.navigate("AddKid", {})}
+            style={styles.headerBtn}
+          >
+            <Text style={styles.headerBtnText}>+ Add</Text>
+          </TouchableOpacity>
+        </View>
       ),
     });
   }, [navigation]);
@@ -65,13 +70,17 @@ export default function ManageKidsScreen({ navigation }: Props): React.ReactElem
         renderItem={({ item }) => (
           <SwipeableRow onDelete={() => confirmDelete(item)}>
             <View style={[styles.row, { shadowColor: item.color }]}>
-              <View style={[styles.avatar, { backgroundColor: item.color }]}>
-                <Text style={styles.avatarEmoji}>{item.emoji}</Text>
-              </View>
+              <KidAvatar emoji={item.emoji} color={item.color} photoUrl={item.photoUrl} size={48} />
               <View style={styles.info}>
                 <Text style={styles.name}>{item.name}</Text>
                 <Text style={styles.pts}>⭐ {item.totalPoints} total pts</Text>
               </View>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("AddKid", { kidId: item.id })}
+                style={styles.editBtn}
+              >
+                <Text style={styles.editBtnText}>Edit</Text>
+              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() =>
                   navigation.navigate("Journal", {
@@ -93,6 +102,7 @@ export default function ManageKidsScreen({ navigation }: Props): React.ReactElem
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: COLORS.background },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: SPACING.sm },
   headerBtn: { paddingHorizontal: SPACING.sm },
   headerBtnText: { color: COLORS.primary, fontWeight: "600", fontSize: 15 },
   list: { padding: SPACING.md },
@@ -112,17 +122,16 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 3 },
     elevation: 3,
   },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  avatarEmoji: { fontSize: 24 },
   info: { flex: 1 },
   name: { fontSize: 16, fontWeight: "700", color: COLORS.text },
   pts: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+  editBtn: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 8,
+    backgroundColor: COLORS.primary + "18",
+  },
+  editBtnText: { color: COLORS.primary, fontWeight: "600", fontSize: 13 },
   journalBtn: {
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,

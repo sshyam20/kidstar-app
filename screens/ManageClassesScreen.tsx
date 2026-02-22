@@ -8,8 +8,10 @@ import {
   FlatList,
   Alert,
 } from "react-native";
+import { CompositeScreenProps } from "@react-navigation/native";
+import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../constants/navigation";
+import { ParentTabParamList, RootStackParamList } from "../constants/navigation";
 import { COLORS, SPACING } from "../constants";
 import { useFamilyId } from "../context/FamilyContext";
 import { useClasses } from "../hooks/useClasses";
@@ -17,7 +19,10 @@ import { deleteClass } from "../services/classes";
 import { ClassSchedule } from "../types";
 import SwipeableRow from "../components/SwipeableRow";
 
-type Props = NativeStackScreenProps<RootStackParamList, "ManageClasses">;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<ParentTabParamList, "Academy">,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -34,6 +39,8 @@ export default function ManageClassesScreen({ navigation }: Props): React.ReactE
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerShown: true,
+      title: "Skill Academy",
       headerRight: () => (
         <TouchableOpacity
           onPress={() => navigation.navigate("AddClass", {})}
@@ -46,7 +53,7 @@ export default function ManageClassesScreen({ navigation }: Props): React.ReactE
   }, [navigation]);
 
   function confirmDelete(cls: ClassSchedule): void {
-    Alert.alert("Delete Skill Academy Class", `Delete "${cls.name}"?`, [
+    Alert.alert("Delete Class", `Delete "${cls.name}"?`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",

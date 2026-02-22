@@ -16,16 +16,12 @@ import LandingScreen from "./screens/LandingScreen";
 import LoginScreen from "./screens/LoginScreen";
 import CreateFamilyScreen from "./screens/CreateFamilyScreen";
 import JoinFamilyScreen from "./screens/JoinFamilyScreen";
-import DashboardScreen from "./screens/DashboardScreen";
+import ParentTabNavigator from "./screens/ParentTabNavigator";
 import ManageKidsScreen from "./screens/ManageKidsScreen";
 import AddKidScreen from "./screens/AddKidScreen";
-import ManageActivitiesScreen from "./screens/ManageActivitiesScreen";
 import AddActivityScreen from "./screens/AddActivityScreen";
-import ManageClassesScreen from "./screens/ManageClassesScreen";
 import AddClassScreen from "./screens/AddClassScreen";
-import RewardStoreScreen from "./screens/RewardStoreScreen";
 import AddRewardScreen from "./screens/AddRewardScreen";
-import FamilySettingsScreen from "./screens/FamilySettingsScreen";
 import KidViewScreen from "./screens/KidViewScreen";
 import JournalScreen from "./screens/JournalScreen";
 import AddJournalEntryScreen from "./screens/AddJournalEntryScreen";
@@ -45,19 +41,23 @@ const linking: LinkingOptions<RootStackParamList> = {
       Login: "login",
       CreateFamily: "setup",
       JoinFamily: "join",
-      Dashboard: "home",
-      ManageKids: "kids",
-      AddKid: "kids/new",
-      ManageActivities: "activities",
-      AddActivity: "activities/edit",
-      ManageClasses: "classes",
-      AddClass: "classes/edit",
-      RewardStore: "rewards",
-      AddReward: "rewards/edit",
-      FamilySettings: "settings",
       KidView: "kid",
       Journal: "journal",
       AddJournalEntry: "journal/entry",
+      ParentTabs: {
+        screens: {
+          Home: "home",
+          Missions: "missions",
+          Academy: "academy",
+          Treasure: "rewards",
+          Family: "family",
+        },
+      },
+      ManageKids: "kids",
+      AddKid: "kids/edit",
+      AddActivity: "activities/edit",
+      AddClass: "classes/edit",
+      AddReward: "rewards/edit",
     },
   },
 };
@@ -115,8 +115,8 @@ function RootNavigator(): React.ReactElement {
   ) : (
     <>
       <Stack.Screen
-        name="Dashboard"
-        component={DashboardScreen}
+        name="ParentTabs"
+        component={ParentTabNavigator}
         options={{ headerShown: false }}
       />
       <Stack.Screen
@@ -130,19 +130,9 @@ function RootNavigator(): React.ReactElement {
         options={{ title: "Add Hero", presentation: "modal" }}
       />
       <Stack.Screen
-        name="ManageActivities"
-        component={ManageActivitiesScreen}
-        options={{ title: "Missions" }}
-      />
-      <Stack.Screen
         name="AddActivity"
         component={AddActivityScreen}
         options={{ title: "Mission", presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="ManageClasses"
-        component={ManageClassesScreen}
-        options={{ title: "Skill Academy" }}
       />
       <Stack.Screen
         name="AddClass"
@@ -150,19 +140,9 @@ function RootNavigator(): React.ReactElement {
         options={{ title: "Add Class", presentation: "modal" }}
       />
       <Stack.Screen
-        name="RewardStore"
-        component={RewardStoreScreen}
-        options={{ title: "Treasure Chest" }}
-      />
-      <Stack.Screen
         name="AddReward"
         component={AddRewardScreen}
         options={{ title: "Reward", presentation: "modal" }}
-      />
-      <Stack.Screen
-        name="FamilySettings"
-        component={FamilySettingsScreen}
-        options={{ title: "Family Settings" }}
       />
       <Stack.Screen
         name="Journal"

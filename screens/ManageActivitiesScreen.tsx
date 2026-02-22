@@ -8,8 +8,10 @@ import {
   FlatList,
   Alert,
 } from "react-native";
+import { CompositeScreenProps } from "@react-navigation/native";
+import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../constants/navigation";
+import { ParentTabParamList, RootStackParamList } from "../constants/navigation";
 import { COLORS, SPACING } from "../constants";
 import { useFamilyId } from "../context/FamilyContext";
 import { useActivities } from "../hooks/useActivities";
@@ -18,16 +20,19 @@ import { getCategoryMeta } from "../constants/categories";
 import { Activity } from "../types";
 import SwipeableRow from "../components/SwipeableRow";
 
-type Props = NativeStackScreenProps<RootStackParamList, "ManageActivities">;
+type Props = CompositeScreenProps<
+  BottomTabScreenProps<ParentTabParamList, "Missions">,
+  NativeStackScreenProps<RootStackParamList>
+>;
 
-export default function ManageActivitiesScreen({
-  navigation,
-}: Props): React.ReactElement {
+export default function ManageActivitiesScreen({ navigation }: Props): React.ReactElement {
   const familyId = useFamilyId();
   const { activities, loading } = useActivities();
 
   useLayoutEffect(() => {
     navigation.setOptions({
+      headerShown: true,
+      title: "Missions",
       headerRight: () => (
         <TouchableOpacity
           onPress={() => navigation.navigate("AddActivity", {})}
@@ -58,9 +63,7 @@ export default function ManageActivitiesScreen({
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           loading ? null : (
-            <Text style={styles.empty}>
-              No missions yet. Tap "+ Add" to create one.
-            </Text>
+            <Text style={styles.empty}>No missions yet. Tap "+ Add" to create one.</Text>
           )
         }
         renderItem={({ item }) => {
@@ -72,16 +75,12 @@ export default function ManageActivitiesScreen({
                 <View style={styles.info}>
                   <Text style={styles.title}>{item.title}</Text>
                   <View style={[styles.badge, { backgroundColor: cat.color }]}>
-                    <Text style={styles.badgeText}>
-                      {cat.emoji} {cat.label}
-                    </Text>
+                    <Text style={styles.badgeText}>{cat.emoji} {cat.label}</Text>
                   </View>
                 </View>
-                <Text style={styles.pts}>+{item.points}</Text>
+                <Text style={styles.pts}>+{item.points}⭐</Text>
                 <TouchableOpacity
-                  onPress={() =>
-                    navigation.navigate("AddActivity", { activityId: item.id })
-                  }
+                  onPress={() => navigation.navigate("AddActivity", { activityId: item.id })}
                   style={styles.editBtn}
                 >
                   <Text style={styles.editBtnText}>Edit</Text>
