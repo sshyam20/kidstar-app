@@ -72,6 +72,14 @@ export interface Redemption {
 
 export type UserRole = "parent" | "kid";
 
+export type MemberRole = "admin" | "parent";
+
+export interface FamilyMembership {
+  familyId: string;
+  role: MemberRole;
+  familyName: string;
+}
+
 export interface FamilyMember {
   uid: string;
   displayName: string;

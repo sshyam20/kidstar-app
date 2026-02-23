@@ -3,13 +3,15 @@ import { User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import { subscribeToAuthState } from "../services/auth";
 import { db } from "../services/firebase";
-import { UserRole } from "../types";
+import { UserRole, FamilyMembership, MemberRole } from "../types";
 
 interface AppState {
   user: User | null;
   familyId: string | null;
   role: UserRole;
   kidId: string | null;
+  userFamilies: FamilyMembership[];
+  isAdmin: boolean;
   loading: boolean;
 }
 
@@ -18,6 +20,7 @@ export function useAppState(): AppState {
   const [familyId, setFamilyId] = useState<string | null>(null);
   const [role, setRole] = useState<UserRole>("parent");
   const [kidId, setKidId] = useState<string | null>(null);
+  const [userFamilies, setUserFamilies] = useState<FamilyMembership[]>([]);
   const [authLoading, setAuthLoading] = useState(true);
   const [firestoreLoading, setFirestoreLoading] = useState(false);
 
@@ -39,16 +42,19 @@ export function useAppState(): AppState {
           doc(db, "users", firebaseUser.uid),
           (snap) => {
             const data = snap.data();
-            setFamilyId((data?.familyId as string) ?? null);
+            // Prefer activeFamilyId, fall back to legacy familyId
+            const fid = ((data?.activeFamilyId ?? data?.familyId) as string) ?? null;
+            setFamilyId(fid);
             setRole((data?.role as UserRole) ?? "parent");
             setKidId((data?.kidId as string) ?? null);
+            setUserFamilies((data?.families as FamilyMembership[]) ?? []);
             setFirestoreLoading(false);
           },
           (_error) => {
-            // Permission denied or network error — treat as no family yet
             setFamilyId(null);
             setRole("parent");
             setKidId(null);
+            setUserFamilies([]);
             setFirestoreLoading(false);
           }
         );
@@ -56,6 +62,7 @@ export function useAppState(): AppState {
         setFamilyId(null);
         setRole("parent");
         setKidId(null);
+        setUserFamilies([]);
         setFirestoreLoading(false);
       }
     });
@@ -66,11 +73,19 @@ export function useAppState(): AppState {
     };
   }, []);
 
+  const isAdmin: boolean =
+    familyId !== null &&
+    userFamilies.some(
+      (f) => f.familyId === familyId && (f.role as MemberRole) === "admin"
+    );
+
   return {
     user,
     familyId,
     role,
     kidId,
+    userFamilies,
+    isAdmin,
     loading: authLoading || firestoreLoading,
   };
 }

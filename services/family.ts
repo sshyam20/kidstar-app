@@ -3,14 +3,17 @@ import {
   doc,
   setDoc,
   getDoc,
+  updateDoc,
+  deleteDoc,
   query,
   where,
   getDocs,
   addDoc,
+  writeBatch,
   serverTimestamp,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { Family, UserRole } from "../types";
+import { Family, FamilyMembership, MemberRole, UserRole } from "../types";
 
 function generateJoinCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -28,25 +31,40 @@ export async function createFamily(
   email: string = ""
 ): Promise<string> {
   const familyRef = doc(collection(db, "families"));
-  await setDoc(familyRef, {
+  const fid = familyRef.id;
+  const batch = writeBatch(db);
+
+  batch.set(familyRef, {
     name,
     joinCode: generateJoinCode(),
     ownerId: userId,
     createdAt: serverTimestamp(),
   });
-  // Write creator as first member (role: parent)
-  await setDoc(doc(db, "families", familyRef.id, "members", userId), {
+
+  // Creator is admin of this family
+  batch.set(doc(db, "families", fid, "members", userId), {
     uid: userId,
     displayName,
     email,
-    role: "parent",
+    role: "parent" as UserRole, // UserRole for app-access type
     joinedAt: serverTimestamp(),
   });
-  await setDoc(doc(db, "users", userId), {
-    familyId: familyRef.id,
+
+  // Read existing families array to append (preserve existing memberships)
+  const userSnap = await getDoc(doc(db, "users", userId));
+  const existing: FamilyMembership[] = (userSnap.data()?.families as FamilyMembership[]) ?? [];
+  const newMembership: FamilyMembership = { familyId: fid, role: "admin", familyName: name };
+  const updatedFamilies = [...existing.filter((f) => f.familyId !== fid), newMembership];
+
+  batch.set(doc(db, "users", userId), {
+    familyId: fid,         // legacy + active
     role: "parent",
+    activeFamilyId: fid,
+    families: updatedFamilies,
   }, { merge: true });
-  return familyRef.id;
+
+  await batch.commit();
+  return fid;
 }
 
 export async function seedFamilyDefaults(familyId: string): Promise<void> {
@@ -123,26 +141,124 @@ export async function joinFamilyByCode(
   }
   const familyDoc = snap.docs[0];
   const familyId = familyDoc.id;
+  const familyName = (familyDoc.data().name as string) || "";
 
-  await setDoc(doc(db, "families", familyId, "members", userId), {
+  // Read current user families to avoid duplicates
+  const userSnap = await getDoc(doc(db, "users", userId));
+  const existingFamilies: FamilyMembership[] = (userSnap.data()?.families as FamilyMembership[]) ?? [];
+  if (existingFamilies.some((f) => f.familyId === familyId)) {
+    throw new Error("You're already a member of this family.");
+  }
+
+  const newMembership: FamilyMembership = { familyId, role: "parent", familyName };
+  const updatedFamilies = [...existingFamilies, newMembership];
+
+  const batch = writeBatch(db);
+  batch.set(doc(db, "families", familyId, "members", userId), {
     uid: userId,
     displayName,
     email,
     role,
     joinedAt: serverTimestamp(),
   });
-  await setDoc(doc(db, "users", userId), {
+  batch.set(doc(db, "users", userId), {
     familyId,
     role,
+    activeFamilyId: familyId,
+    families: updatedFamilies,
   }, { merge: true });
 
+  await batch.commit();
   return familyId;
+}
+
+export async function switchActiveFamily(userId: string, familyId: string): Promise<void> {
+  await updateDoc(doc(db, "users", userId), {
+    activeFamilyId: familyId,
+    familyId, // keep in sync for legacy/kid compat
+  });
+}
+
+export async function leaveFamily(userId: string, familyId: string): Promise<void> {
+  const userSnap = await getDoc(doc(db, "users", userId));
+  const userData = userSnap.data();
+  const existing: FamilyMembership[] = (userData?.families as FamilyMembership[]) ?? [];
+  const updated = existing.filter((f) => f.familyId !== familyId);
+  const newActive = updated.length > 0 ? updated[0].familyId : null;
+
+  const batch = writeBatch(db);
+  batch.delete(doc(db, "families", familyId, "members", userId));
+  batch.update(doc(db, "users", userId), {
+    families: updated,
+    activeFamilyId: newActive,
+    familyId: newActive,
+  });
+  await batch.commit();
+}
+
+export async function transferAdmin(
+  familyId: string,
+  fromUid: string,
+  toUid: string
+): Promise<void> {
+  // Update family document's ownerId
+  await updateDoc(doc(db, "families", familyId), { ownerId: toUid });
+
+  // Update user docs' families arrays (change role for both)
+  const [fromSnap, toSnap] = await Promise.all([
+    getDoc(doc(db, "users", fromUid)),
+    getDoc(doc(db, "users", toUid)),
+  ]);
+
+  function updateRole(families: FamilyMembership[], fid: string, newRole: MemberRole): FamilyMembership[] {
+    return families.map((f) => f.familyId === fid ? { ...f, role: newRole } : f);
+  }
+
+  const fromFamilies = updateRole((fromSnap.data()?.families as FamilyMembership[]) ?? [], familyId, "parent");
+  const toFamilies = updateRole((toSnap.data()?.families as FamilyMembership[]) ?? [], familyId, "admin");
+
+  const batch = writeBatch(db);
+  batch.update(doc(db, "users", fromUid), { families: fromFamilies });
+  batch.update(doc(db, "users", toUid), { families: toFamilies });
+  await batch.commit();
+}
+
+export async function deleteEntireFamily(familyId: string): Promise<void> {
+  // Delete all kids and their journal subcollections first
+  const kidsSnap = await getDocs(collection(db, "families", familyId, "kids"));
+  for (const kidDoc of kidsSnap.docs) {
+    const journalSnap = await getDocs(
+      collection(db, "families", familyId, "kids", kidDoc.id, "journal")
+    );
+    if (journalSnap.docs.length > 0) {
+      const jBatch = writeBatch(db);
+      journalSnap.docs.forEach((d) => jBatch.delete(d.ref));
+      await jBatch.commit();
+    }
+  }
+
+  // Delete all other subcollections
+  const subcollections = [
+    "kids", "activities", "completions", "classes",
+    "rewards", "redemptions", "members", "invitations",
+  ];
+  for (const subcol of subcollections) {
+    const colSnap = await getDocs(collection(db, "families", familyId, subcol));
+    if (colSnap.docs.length > 0) {
+      const batch = writeBatch(db);
+      colSnap.docs.forEach((d) => batch.delete(d.ref));
+      await batch.commit();
+    }
+  }
+
+  // Delete the family document itself
+  await deleteDoc(doc(db, "families", familyId));
 }
 
 export async function getUserFamilyId(userId: string): Promise<string | null> {
   const snap = await getDoc(doc(db, "users", userId));
   if (!snap.exists()) return null;
-  return (snap.data().familyId as string) ?? null;
+  return ((snap.data().activeFamilyId ?? snap.data().familyId) as string) ?? null;
 }
 
 export async function getFamily(familyId: string): Promise<Family | null> {

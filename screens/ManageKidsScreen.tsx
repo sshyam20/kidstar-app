@@ -13,7 +13,7 @@ import { RootStackParamList } from "../constants/navigation";
 import { COLORS, SPACING } from "../constants";
 import { useFamilyId } from "../context/FamilyContext";
 import { useKids } from "../hooks/useKids";
-import { deleteKid } from "../services/kids";
+import { removeKid } from "../services/kids";
 import { Kid } from "../types";
 import SwipeableRow from "../components/SwipeableRow";
 import KidAvatar from "../components/KidAvatar";
@@ -44,13 +44,13 @@ export default function ManageKidsScreen({ navigation }: Props): React.ReactElem
   function confirmDelete(kid: Kid): void {
     Alert.alert(
       "Remove Hero",
-      `Remove ${kid.name} from your family? This cannot be undone.`,
+      `Are you sure you want to remove ${kid.name}? This will delete all their missions, stars, journal entries and history. This cannot be undone.`,
       [
         { text: "Cancel", style: "cancel" },
         {
           text: "Remove",
           style: "destructive",
-          onPress: () => deleteKid(familyId, kid.id),
+          onPress: () => removeKid(familyId, kid.id),
         },
       ]
     );

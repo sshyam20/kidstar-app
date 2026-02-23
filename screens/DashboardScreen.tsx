@@ -12,7 +12,8 @@ import {
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
 import { ParentTabParamList } from "../constants/navigation";
 import { COLORS, SPACING } from "../constants";
-import { useFamilyId } from "../context/FamilyContext";
+import { useFamilyId, useFamilyName, useUserFamilies } from "../context/FamilyContext";
+import { switchActiveFamily } from "../services/family";
 import { useKids } from "../hooks/useKids";
 import { useActivities } from "../hooks/useActivities";
 import { useTodayCompletions } from "../hooks/useTodayCompletions";
@@ -39,6 +40,8 @@ function formatTime(time: string): string {
 export default function DashboardScreen({ navigation }: Props): React.ReactElement {
   const { user } = useAuth();
   const familyId = useFamilyId();
+  const familyName = useFamilyName();
+  const userFamilies = useUserFamilies();
   const { showToast } = useToast();
   const { kids } = useKids();
   const { activities } = useActivities();
@@ -117,8 +120,36 @@ export default function DashboardScreen({ navigation }: Props): React.ReactEleme
     }
   }
 
+  function handleSwitchFamily(): void {
+    if (!user || userFamilies.length < 2) return;
+    const otherFamilies = userFamilies.filter((f) => f.familyId !== familyId);
+    Alert.alert(
+      "Switch Family",
+      "Choose which family to view:",
+      [
+        ...otherFamilies.map((f) => ({
+          text: f.familyName || "Unnamed Family",
+          onPress: () => switchActiveFamily(user.uid, f.familyId),
+        })),
+        { text: "Cancel", style: "cancel" as const },
+      ]
+    );
+  }
+
   const ListHeader = (
     <View>
+      {/* Family switcher */}
+      {userFamilies.length > 1 ? (
+        <TouchableOpacity style={styles.familySwitcher} onPress={handleSwitchFamily} activeOpacity={0.8}>
+          <Text style={styles.familySwitcherName}>{familyName || "My Family"}</Text>
+          <Text style={styles.familySwitcherCaret}>▾ Switch</Text>
+        </TouchableOpacity>
+      ) : (familyName ? (
+        <View style={styles.familyBanner}>
+          <Text style={styles.familyBannerName}>{familyName}</Text>
+        </View>
+      ) : null)}
+
       {/* Kid cards */}
       <ScrollView
         horizontal
@@ -308,6 +339,28 @@ const styles = StyleSheet.create({
   },
   emptyIcon: { fontSize: 36 },
   emptyActivitiesText: { color: COLORS.textSecondary, fontSize: 15, textAlign: "center" },
+  familySwitcher: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    backgroundColor: COLORS.primary + "12",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.primary + "30",
+  },
+  familySwitcherName: { fontSize: 15, fontWeight: "700", color: COLORS.text },
+  familySwitcherCaret: { fontSize: 13, color: COLORS.primary, fontWeight: "600" },
+  familyBanner: {
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+  },
+  familyBannerName: { fontSize: 14, fontWeight: "700", color: COLORS.textSecondary },
   signOutBtn: { alignItems: "center", paddingVertical: SPACING.lg },
   signOutText: { fontSize: 14, color: COLORS.textSecondary },
 });

@@ -3,14 +3,16 @@ import {
   doc,
   addDoc,
   deleteDoc,
+  getDoc,
   query,
   where,
   getDocs,
   serverTimestamp,
   setDoc,
+  updateDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import { Invitation, UserRole } from "../types";
+import { FamilyMembership, Invitation, UserRole } from "../types";
 
 // Invitations live at top-level so they can be queried by email at sign-in
 export async function sendInvitation(
@@ -63,7 +65,7 @@ export async function acceptInvitation(
   uid: string,
   displayName: string
 ): Promise<void> {
-  // Write member record + user doc
+  // Write member record
   await setDoc(doc(db, "families", invitation.familyId, "members", uid), {
     uid,
     displayName,
@@ -71,11 +73,38 @@ export async function acceptInvitation(
     role: invitation.role,
     joinedAt: serverTimestamp(),
   });
-  await setDoc(
-    doc(db, "users", uid),
-    { familyId: invitation.familyId, role: invitation.role },
-    { merge: true }
-  );
+
+  // Add this family to the user's families array (avoid duplicates)
+  const userSnap = await getDoc(doc(db, "users", uid));
+  const existingFamilies: FamilyMembership[] =
+    (userSnap.data()?.families as FamilyMembership[]) ?? [];
+  const alreadyIn = existingFamilies.some((f) => f.familyId === invitation.familyId);
+
+  if (!alreadyIn) {
+    const newMembership: FamilyMembership = {
+      familyId: invitation.familyId,
+      role: "parent",
+      familyName: invitation.familyName,
+    };
+    const updated = [...existingFamilies, newMembership];
+    await setDoc(
+      doc(db, "users", uid),
+      {
+        familyId: invitation.familyId,
+        role: invitation.role,
+        activeFamilyId: invitation.familyId,
+        families: updated,
+      },
+      { merge: true }
+    );
+  } else {
+    await setDoc(
+      doc(db, "users", uid),
+      { familyId: invitation.familyId, role: invitation.role },
+      { merge: true }
+    );
+  }
+
   // Delete invitation after acceptance
   await deleteDoc(doc(db, "invitations", invitation.id));
 }

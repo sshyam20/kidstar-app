@@ -63,7 +63,8 @@ const linking: LinkingOptions<RootStackParamList> = {
 };
 
 function RootNavigator(): React.ReactElement {
-  const { user, familyId, role, kidId, loading } = useAppState();
+  const { user, familyId, role, kidId, userFamilies, isAdmin, loading } = useAppState();
+  const familyName = userFamilies.find((f) => f.familyId === familyId)?.familyName ?? "";
 
   if (loading) {
     return (
@@ -160,7 +161,14 @@ function RootNavigator(): React.ReactElement {
 
   if (familyId) {
     return (
-      <FamilyProvider familyId={familyId} role={role} kidId={kidId}>
+      <FamilyProvider
+        familyId={familyId}
+        familyName={familyName}
+        role={role}
+        kidId={kidId}
+        userFamilies={userFamilies}
+        isAdmin={isAdmin}
+      >
         {stack}
       </FamilyProvider>
     );
